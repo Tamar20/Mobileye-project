@@ -3,6 +3,7 @@ import numpy as np
 
 def calc_TFL_dist(prev_container, curr_container, focal, pp):
     norm_prev_pts, norm_curr_pts, R, foe, tZ = prepare_3D_data(prev_container, curr_container, focal, pp)
+
     if (abs(tZ.all()) < 10e-6):
         print('tz = ', tZ)
     elif (norm_prev_pts.size == 0):
@@ -12,6 +13,7 @@ def calc_TFL_dist(prev_container, curr_container, focal, pp):
     else:
         curr_container.corresponding_ind, curr_container.traffic_lights_3d_location, curr_container.valid = calc_3D_data(
             norm_prev_pts, norm_curr_pts, R, foe, tZ)
+
     return curr_container
 
 
@@ -19,6 +21,7 @@ def prepare_3D_data(prev_container, curr_container, focal, pp):
     norm_prev_pts = normalize(prev_container.traffic_light, focal, pp)
     norm_curr_pts = normalize(curr_container.traffic_light, focal, pp)
     R, foe, tZ = decompose(np.array(curr_container.EM))
+
     return norm_prev_pts, norm_curr_pts, R, foe, tZ
 
 
@@ -27,6 +30,7 @@ def calc_3D_data(norm_prev_pts, norm_curr_pts, R, foe, tZ):
     pts_3D = []
     corresponding_ind = []
     validVec = []
+
     for p_curr in norm_curr_pts:
         corresponding_p_ind, corresponding_p_rot = find_corresponding_points(p_curr, norm_rot_pts, foe)
         Z = calc_dist(p_curr, corresponding_p_rot, foe, tZ)
@@ -37,6 +41,7 @@ def calc_3D_data(norm_prev_pts, norm_curr_pts, R, foe, tZ):
         P = Z * np.array([p_curr[0], p_curr[1], 1])
         pts_3D.append((P[0], P[1], P[2]))
         corresponding_ind.append(corresponding_p_ind)
+
     return corresponding_ind, np.array(pts_3D), validVec
 
 
@@ -56,12 +61,13 @@ def decompose(EM):
     t = EM[:3, 3]
     tZ = t[2]
     foe = [t[0] / t[2], t[1] / t[2]]
+
     return R, foe, tZ
 
 
 # rotate the points - pts using R
 def rotate(pts, R):
-    return np.array([pt @ R for pt in pts])
+    return np.array([R @ pt for pt in pts])
 
 
 # compute the epipolar line between p and foe
@@ -72,6 +78,7 @@ def compute_epipolar_line(p, foe):
 def compute_dist(pt, line):
     x, y = pt[0], pt[1]
     n, m = line[0], line[1]
+
     return abs((n * x - y) / ((m ** 2 + 1) ** 0.5))
 
 
@@ -85,19 +92,16 @@ def find_corresponding_points(p, norm_pts_rot, foe):
     return np.argmin(dist), np.array(norm_pts_rot[np.argmin(dist)])
 
 
-
 # calculate the distance of p_curr using x_curr, x_rot, foe_x and tZ
 # calculate the distance of p_curr using y_curr, y_rot, foe_y and tZ
 # combine the two estimations and return estimated Z
 def calc_dist(p_curr, p_rot, foe, tZ):
+    Zx = tZ * (foe[0] - p_rot[0]) / (p_curr[0] - p_rot[0])
+    Zy = tZ * (foe[1] - p_rot[1]) / (p_curr[1] - p_rot[1])
 
-    zX = tZ * (foe[0] - p_rot[0]) / (p_curr[0] - p_rot[0])
-    zY = tZ * (foe[1] - p_rot[1]) / (p_curr[1] - p_rot[1])
+    # x_dist = abs(p_curr[0] - p_rot[0])
+    # y_dist = abs(p_curr[1] - p_rot[1])
+    #
+    # return (x_dist * Zx + y_dist * Zy) / (x_dist + y_dist)
 
-    x_dist = abs(p_curr[0] - p_rot[0])
-    y_dist = abs(p_curr[1] - p_rot[1])
-
-    return (x_dist * zX + y_dist * zY) / (x_dist + y_dist)
-
-
-
+    return np.average([Zx, Zy], weights=[abs(p_rot[0] - p_curr[0]), abs(p_rot[1] - p_curr[1])])

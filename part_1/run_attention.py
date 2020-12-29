@@ -1,28 +1,28 @@
 import cv2
 
 try:
-    print("Elementary imports: ")
+    # print("Elementary imports: ")
     import os
     import json
     import glob
     import argparse
 
-    print("numpy/scipy imports:")
+    # print("numpy/scipy imports:")
     import numpy as np
     from scipy import signal as sg
     import scipy.ndimage as ndimage
     from scipy.ndimage.filters import maximum_filter
 
-    print("PIL imports:")
+    # print("PIL imports:")
     from PIL import Image
 
-    print("matplotlib imports:")
+    # print("matplotlib imports:")
     import matplotlib.pyplot as plt
 except ImportError:
     print("Need to fix the installation")
     raise
 
-print("All imports okay. Yay!")
+# print("All imports okay. Yay!")
 
 
 def rgb2gray(rgb: np.ndarray):
