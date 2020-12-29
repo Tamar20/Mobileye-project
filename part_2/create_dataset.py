@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from os.path import join
 from PIL import Image
-import os
+from os import walk
+
 
 from .tfl_detection import load_tfl_data, viz_my_data
 
@@ -93,7 +94,7 @@ def read_data(dataset_type):
 
 
 def uploading_images(dataset_type):
-    for root, dirs, images in os.walk(f".\cityscapes\gtFine\\{dataset_type}"):
+    for root, dirs, images in walk(f".\cityscapes\gtFine\\{dataset_type}"):
         for image in images:
             if image.endswith("_gtFine_labelIds.png"):
                 curr_path = f"{root}\\{image}"

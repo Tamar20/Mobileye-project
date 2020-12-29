@@ -1,8 +1,7 @@
 import numpy as np
-import pickle
 import matplotlib._png as png
 import matplotlib.pyplot as plt
-from part_3.SFM import *
+from part_3.SFM import prepare_3D_data, rotate, unnormalize
 
 
 def visualize(prev_container, prev_id, curr_container, curr_id, focal, pp):
@@ -41,26 +40,3 @@ class FrameContainer(object):
         self.corresponding_ind = []
         self.valid = []
 
-
-# read data and run
-#
-# curr_frame_id = 25
-# prev_frame_id = 24
-# pkl_path = 'dusseldorf_000049.pkl'
-# prev_img_path = 'dusseldorf_000049_0000' + str(prev_frame_id) + '_leftImg8bit.png'
-# curr_img_path = 'dusseldorf_000049_0000' + str(curr_frame_id) + '_leftImg8bit.png'
-# prev_container = FrameContainer(prev_img_path)
-# curr_container = FrameContainer(curr_img_path)
-# with open(pkl_path, 'rb') as pklfile:
-#     data = pickle.load(pklfile, encoding='latin1')
-# focal = data['flx']
-# pp = data['principle_point']
-# prev_container.traffic_light = np.array(data['points_' + str(prev_frame_id)][0])
-# curr_container.traffic_light = np.array(data['points_' + str(curr_frame_id)][0])
-# EM = np.eye(4)
-# for i in range(prev_frame_id, curr_frame_id):
-#     EM = np.dot(data['egomotion_' + str(i) + '-' + str(i + 1)], EM)
-# curr_container.EM = EM
-# curr_container = calc_TFL_dist(prev_container, curr_container, focal, pp)
-# visualize(prev_container, curr_container, focal, pp)
-#

@@ -1,28 +1,24 @@
 import cv2
 
 try:
-    # print("Elementary imports: ")
     import os
     import json
     import glob
     import argparse
 
-    # print("numpy/scipy imports:")
     import numpy as np
     from scipy import signal as sg
     import scipy.ndimage as ndimage
     from scipy.ndimage.filters import maximum_filter
 
-    # print("PIL imports:")
     from PIL import Image
 
-    # print("matplotlib imports:")
     import matplotlib.pyplot as plt
+
 except ImportError:
     print("Need to fix the installation")
     raise
 
-# print("All imports okay. Yay!")
 
 
 def rgb2gray(rgb: np.ndarray):
@@ -36,25 +32,34 @@ def find_tfl_lights(c_image: np.ndarray, **kwargs):
     :param kwargs: Whatever config you want to pass in here
     :return: 4-tuple of x_red, y_red, x_green, y_green
     """
-    kernel = np.array(
-        [[-1, -1, -1, -1, -1],
-         [-1, 8, 8, 8, -1],
-         [-1, 8, 8, 8, -1],
-         [-1, 8, 8, 8, -1],
-         [-1, -1, -1, -1, -1]]) / 9
+    # kernel = np.array(
+    #     [[-1, -1, -1, -1, -1],
+    #      [-1, 8, 8, 8, -1],
+    #      [-1, 8, 8, 8, -1],
+    #      [-1, 8, 8, 8, -1],
+    #      [-1, -1, -1, -1, -1]]) / 9
+
+    t = 1 - np.abs(np.linspace(-1, 1, 5))
+    kernel = t.reshape(5, 1) * t.reshape(1, 5)
+    kernel /= kernel.sum()
+
     x_red = []
     y_red = []
     x_green = []
     y_green = []
+
     red_layer = sg.convolve2d(c_image[:, :, 0], kernel, mode='same', boundary='fill', fillvalue=0)
     red_layer_filtered = ndimage.maximum_filter(red_layer, 90)
     red_coordinates = np.argwhere(red_layer_filtered == red_layer)
+
     for coordinate in red_coordinates:
         x_red.append(coordinate[1])
         y_red.append(coordinate[0])
+
     green_layer = sg.convolve2d(c_image[:, :, 1], kernel)
     green_layer_filtered = ndimage.maximum_filter(green_layer, 100)
     green_coordinates = np.argwhere(green_layer_filtered == green_layer)
+
     for coordinate in green_coordinates:
         x_green.append(coordinate[1])
         y_green.append(coordinate[0])
@@ -66,6 +71,7 @@ def show_image_and_gt(image, objs, fig_num=None):
     plt.figure(fig_num).clf()
     plt.imshow(image)
     labels = set()
+
     if objs is not None:
         for o in objs:
             poly = np.array(o['polygon'])[list(np.arange(len(o['polygon']))) + [0]]
@@ -103,20 +109,24 @@ def main(argv=None):
     parser.add_argument('-i', '--image', type=str, help='Path to an image')
     parser.add_argument("-j", "--json", type=str, help="Path to json GT for comparison")
     parser.add_argument('-d', '--dir', type=str, help='Directory to scan images in')
+
     args = parser.parse_args(argv)
     default_base = '../../data'
     if args.dir is None:
         args.dir = default_base
     flist = glob.glob(os.path.join(args.dir, '*_leftImg8bit.png'))
+
     for image in flist:
         json_fn = image.replace('_leftImg8bit.png', '_gtFine_polygons.json')
         if not os.path.exists(json_fn):
             json_fn = None
         test_find_tfl_lights(image, json_fn)
+
     if len(flist):
         print("You should now see some images, with the ground truth marked on them. Close all to quit.")
     else:
         print("Bad configuration?? Didn't find any picture to show")
+
     plt.show(block=True)
 
 
